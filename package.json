@@ -1,0 +1,30 @@
+{
+  "name": "open-eraser",
+  "version": "0.0.1",
+  "description": "Deterministic renderer for Mermaid flowcharts with Eraser-quality output. Pure Node — no browser in the build.",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "pipeline": "tsx scripts/pipeline.ts",
+    "icon-sheet": "tsx scripts/icon-sheet.ts",
+    "gen-vocab": "tsx scripts/gen-vocab.ts",
+    "build": "tsx scripts/build-artifact.ts",
+    "demo-artifact": "tsx scripts/demo-artifact.ts"
+  },
+  "dependencies": {
+    "elkjs": "^0.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.22.4",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}

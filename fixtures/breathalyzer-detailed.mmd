@@ -1,0 +1,53 @@
+graph TB
+    %% icons: BAT=battery, SW=switch, REG33=regulator, REG5=regulator
+    %% icons: RAIL33=zap, RAIL5=zap, MCU=mcu, FUEL=sensor, AMP=op-amp
+    %% icons: TEMP=thermometer, LCD=display, BUZZ=speaker, BTN=button, PUMP=fan
+    subgraph Power["Power System"]
+        BAT[9V Alkaline Battery<br/>400-600mAh] --> SW[Power Switch]
+        SW --> REG33[3.3V LDO Regulator<br/>500mA capacity]
+        SW --> REG5[5V LDO Regulator<br/>200mA capacity]
+        REG33 --> RAIL33[3.3V Rail<br/>~100mA total]
+        REG5 --> RAIL5[5V Rail<br/>~120mA total]
+    end
+
+    subgraph Control["Control System"]
+        RAIL33 --> MCU[32-bit ARM Cortex-M<br/>Built-in 16-bit ADC<br/>50mA]
+        MCU --> ADC[ADC Channels]
+        MCU --> SPI[SPI Interface]
+        MCU --> I2C[I2C Interface]
+        MCU --> GPIO[GPIO Controls]
+    end
+
+    subgraph Sensor["Sensor System"]
+        RAIL5 --> FUEL[Electrochemical Fuel Cell<br/>Alcohol Sensor<br/>10mA]
+        FUEL --> AMP[Precision Instrumentation<br/>Amplifier<br/>5mA]
+        RAIL33 --> AMP
+        AMP -->|Amplified Analog| ADC
+
+        RAIL33 --> TEMP[Precision Temperature<br/>Sensor IC<br/>1mA]
+        TEMP -->|Digital I2C| I2C
+    end
+
+    subgraph UI["User Interface"]
+        RAIL5 --> LCD[2-inch Monochrome LCD<br/>SPI Interface<br/>30mA]
+        SPI -->|Display Data| LCD
+
+        RAIL33 --> BUZZ[Piezo Buzzer<br/>30mA peak]
+        GPIO -.->|Control Signal| BUZZ
+
+        BTN[Momentary Push Button] -->|User Input| GPIO
+    end
+
+    subgraph Air["Air Sampling System"]
+        RAIL5 --> PUMP[Air Sampling Pump<br/>80mA]
+        GPIO -.->|PWM Control| PUMP
+        TUBE[Breath Sample Tube] --> CHAMBER[Sensor Chamber]
+        PUMP --> CHAMBER
+        CHAMBER --> FUEL
+    end
+
+    style Power fill:#e1f5fe
+    style Control fill:#f3e5f5
+    style Sensor fill:#e8f5e8
+    style UI fill:#fff3e0
+    style Air fill:#fce4ec

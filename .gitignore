@@ -1,0 +1,5 @@
+node_modules/
+dist/
+# all of generated/ is derived output — built by `npm run build`, never committed
+generated/
+.DS_Store

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: #0b0d12; color: #e8ecf3; font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 16px; padding: 10px 16px; border-bottom: 1px solid #232834; background: #0e1117; flex: none; }
+  header h1 { font-size: 14px; margin: 0; font-weight: 600; color: #aab3c5; white-space: nowrap; }
+  nav { display: flex; gap: 6px; flex: 1; overflow-x: auto; }
+  nav button { background: none; border: 1px solid transparent; color: #8b94a7; font: inherit; font-size: 12.5px; padding: 5px 12px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+  nav button.active { background: #1c212b; border-color: #2e3543; color: #e8ecf3; }
+  .actions { display: flex; gap: 6px; flex: none; }
+  .actions button { background: #1c212b; border: 1px solid #2e3543; color: #aab3c5; font-size: 12px; padding: 5px 10px; border-radius: 8px; cursor: pointer; }
+  .actions button:hover { color: #e8ecf3; }
+  #viewport { flex: 1; overflow: hidden; position: relative; cursor: grab; }
+  #viewport.panning { cursor: grabbing; }
+  #canvas { position: absolute; transform-origin: 0 0; }
+  #canvas svg { display: block; }
+  #error { padding: 24px; color: #f87171; font-family: Consolas, monospace; font-size: 13px; white-space: pre-wrap; display: none; }
+  footer { flex: none; padding: 6px 16px; font-size: 11px; color: #5b6373; border-top: 1px solid #1a1e27; }
+</style>
+</head>
+<body>
+<header>
+  <h1 id="title">Architecture</h1>
+  <nav id="tabs"></nav>
+  <div class="actions">
+    <button id="fit" title="Fit diagram to window">Fit</button>
+    <button id="dl" title="Download current diagram as SVG">Download SVG</button>
+  </div>
+</header>
+<div id="viewport"><div id="canvas"></div><div id="error"></div></div>
+<footer>Rendered offline by openEraser &mdash; drag to pan, scroll to zoom.</footer>
+<script>__OPEN_ERASER_BUNDLE__</script>
+<script id="oe-data" type="application/json">__OPEN_ERASER_DATA__</script>
+<script>
+(function () {
+  'use strict';
+  var viewport = document.getElementById('viewport');
+  var canvas = document.getElementById('canvas');
+  var errorEl = document.getElementById('error');
+  var tabsEl = document.getElementById('tabs');
+
+  function showError(msg) {
+    canvas.innerHTML = '';
+    errorEl.textContent = msg;
+    errorEl.style.display = 'block';
+  }
+
+  var data;
+  try {
+    data = JSON.parse(document.getElementById('oe-data').textContent);
+  } catch (e) {
+    showError('Invalid diagram data: ' + e.message);
+    return;
+  }
+  if (!data || !Array.isArray(data.diagrams) || data.diagrams.length === 0) {
+    showError('No diagrams in this artifact.');
+    return;
+  }
+
+  document.title = data.title || 'Architecture';
+  document.getElementById('title').textContent = data.title || 'Architecture';
+
+  var view = { x: 0, y: 0, k: 1 };
+  var size = { w: 1, h: 1 };
+  var current = 0;
+
+  function apply() {
+    canvas.style.transform =
+      'translate(' + view.x + 'px,' + view.y + 'px) scale(' + view.k + ')';
+  }
+
+  function fit() {
+    var vw = viewport.clientWidth;
+    var vh = viewport.clientHeight;
+    var k = Math.min(vw / size.w, vh / size.h, 1);
+    view = { k: k, x: (vw - size.w * k) / 2, y: Math.max((vh - size.h * k) / 2, 0) };
+    apply();
+  }
+
+  function show(i) {
+    current = i;
+    Array.prototype.forEach.call(tabsEl.children, function (b, j) {
+      b.className = j === i ? 'active' : '';
+    });
+    openEraser
+      .render(data.diagrams[i].mermaid)
+      .then(function (svg) {
+        errorEl.style.display = 'none';
+        canvas.innerHTML = svg;
+        var el = canvas.querySelector('svg');
+        size = { w: parseFloat(el.getAttribute('width')), h: parseFloat(el.getAttribute('height')) };
+        fit();
+      })
+      .catch(function (e) {
+        showError('Failed to render "' + data.diagrams[i].name + '":\n' + e.message);
+      });
+  }
+
+  if (data.diagrams.length > 1) {
+    data.diagrams.forEach(function (d, i) {
+      var b = document.createElement('button');
+      b.textContent = d.name || 'Diagram ' + (i + 1);
+      b.addEventListener('click', function () { show(i); });
+      tabsEl.appendChild(b);
+    });
+  }
+
+  document.getElementById('fit').addEventListener('click', fit);
+  document.getElementById('dl').addEventListener('click', function () {
+    var svg = canvas.innerHTML;
+    if (!svg) return;
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+    a.download = (data.diagrams[current].name || 'diagram') + '.svg';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  viewport.addEventListener('wheel', function (e) {
+    e.preventDefault();
+    var factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+    var nk = Math.min(Math.max(view.k * factor, 0.15), 5);
+    var rect = viewport.getBoundingClientRect();
+    var px = e.clientX - rect.left;
+    var py = e.clientY - rect.top;
+    view.x = px - ((px - view.x) * nk) / view.k;
+    view.y = py - ((py - view.y) * nk) / view.k;
+    view.k = nk;
+    apply();
+  }, { passive: false });
+
+  var drag = null;
+  viewport.addEventListener('pointerdown', function (e) {
+    drag = { x: e.clientX - view.x, y: e.clientY - view.y };
+    viewport.classList.add('panning');
+    viewport.setPointerCapture(e.pointerId);
+  });
+  viewport.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    view.x = e.clientX - drag.x;
+    view.y = e.clientY - drag.y;
+    apply();
+  });
+  viewport.addEventListener('pointerup', function () {
+    drag = null;
+    viewport.classList.remove('panning');
+  });
+
+  window.addEventListener('resize', fit);
+  show(0);
+})();
+</script>
+</body>
+</html>

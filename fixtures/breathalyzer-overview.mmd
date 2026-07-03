@@ -1,0 +1,20 @@
+graph TB
+    %% icons: BAT=battery, PWR=zap, MCU=mcu, SENS=sensor, TEMP=thermometer
+    %% icons: LCD=display, BUZZ=speaker, PUMP=fan, BTN=button, UI=layout, AIR=wind
+    BAT[9V Battery] --> PWR[Power Management]
+    PWR --> MCU[ARM Microcontroller]
+    PWR --> SENS[Electrochemical Sensor]
+    PWR --> UI[User Interface]
+    PWR --> AIR[Air Sampling System]
+
+    SENS -->|Analog Signal| MCU
+    TEMP[Temperature Sensor] -->|I2C| MCU
+    MCU -->|SPI| LCD[2" LCD Display]
+    MCU -->|GPIO| BUZZ[Buzzer]
+    MCU -->|PWM| PUMP[Air Pump]
+    BTN[Power Button] -->|GPIO| MCU
+
+    AIR --> SENS
+    UI -.-> BTN
+    UI -.-> LCD
+    UI -.-> BUZZ
