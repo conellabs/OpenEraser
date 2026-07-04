@@ -40,7 +40,7 @@ Open the generated `.html` files in any browser — they work offline.
 ## Library API
 
 ```ts
-import { render, parse, themes } from 'open-eraser';
+import { render, parse, themes } from '@conellabs/open-eraser';
 
 const svg = await render(mermaidText, {
   theme: themes.dark,                      // default
