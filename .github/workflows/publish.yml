@@ -3,8 +3,17 @@ name: Publish Package
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     tags:
       - 'v*'
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'tsconfig.json'
+      - 'tsconfig.build.json'
+      - '.github/workflows/publish.yml'
 
 permissions:
   contents: read
@@ -25,6 +34,21 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: pnpm build:lib
-      - run: pnpm publish --no-git-checks
+      - name: Check whether this version is already published
+        id: package
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if pnpm view @conellabs/open-eraser@$VERSION version --registry=https://npm.pkg.github.com >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "@conellabs/open-eraser@$VERSION is already published; skipping."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "@conellabs/open-eraser@$VERSION is not published yet."
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish package
+        if: steps.package.outputs.exists != 'true'
+        run: pnpm publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
