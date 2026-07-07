@@ -5,6 +5,11 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
+    // Embed the TS source into the .map files so they are self-contained. The
+    // package ships only `dist`, so without this the maps point at `../src/*.ts`
+    // files that never ship — which makes Vite (and editors) warn about missing
+    // sources in every consumer.
+    "inlineSources": true,
     "outDir": "dist",
     "rootDir": "src"
   },
