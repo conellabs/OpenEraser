@@ -1,6 +1,6 @@
 {
   "name": "@conellabs/open-eraser",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Deterministic renderer for Mermaid flowcharts with Eraser-quality output. Pure Node — no browser in the build.",
   "type": "module",
   "packageManager": "pnpm@11.9.0",
