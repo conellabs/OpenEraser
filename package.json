@@ -1,5 +1,5 @@
 {
-  "name": "@conellabs/open-eraser",
+  "name": "open-eraser",
   "version": "0.1.0",
   "description": "Deterministic, offline renderer for Mermaid flowcharts with architecture-focused SVG output.",
   "type": "module",

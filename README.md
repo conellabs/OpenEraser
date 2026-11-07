@@ -16,15 +16,15 @@ architecture-focused SVG diagrams.
 Open Eraser requires Node.js 22 or newer.
 
 ```bash
-npm install @conellabs/open-eraser
+npm install open-eraser
 # or
-pnpm add @conellabs/open-eraser
+pnpm add open-eraser
 ```
 
 ## Render an SVG
 
 ```js
-import { render, themes } from '@conellabs/open-eraser';
+import { render, themes } from 'open-eraser';
 
 const source = `flowchart LR
   Client[Client] --> API[API gateway]
@@ -36,7 +36,7 @@ const svg = await render(source, { theme: themes.dark });
 You can also parse first and work with the diagram representation:
 
 ```js
-import { parse, render } from '@conellabs/open-eraser';
+import { parse, render } from 'open-eraser';
 
 const diagram = parse('flowchart LR\n  A[Client] --> B[API]');
 const svg = await render(diagram);
@@ -105,7 +105,7 @@ it with:
 
 ```js
 const vocabularyUrl = import.meta.resolve(
-  '@conellabs/open-eraser/icon-vocabulary.md',
+  'open-eraser/icon-vocabulary.md',
 );
 ```
 
@@ -121,7 +121,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 const templateUrl = import.meta.resolve(
-  '@conellabs/open-eraser/artifact-template.html',
+  'open-eraser/artifact-template.html',
 );
 const template = await readFile(fileURLToPath(templateUrl), 'utf8');
 
@@ -152,7 +152,7 @@ parse(source: string): DiagramAST
 
 The root package also exports the diagram and theme types, `iconManifest`, and
 `layoutDiagram`. A bundler-oriented entry is available at
-`@conellabs/open-eraser/browser`.
+`open-eraser/browser`.
 
 ## How rendering works
 
