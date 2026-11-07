@@ -141,7 +141,7 @@ The resulting file opens directly through `file://`.
 
 ```ts
 render(input: string | DiagramAST, options?: RenderOptions): Promise<string>
-parse(source: string): DiagramAST
+parse(source: string, options?: ParseOptions): DiagramAST
 ```
 
 `RenderOptions` supports:
@@ -149,6 +149,29 @@ parse(source: string): DiagramAST
 - `theme` — a `ThemeConfig`; defaults to `themes.dark`
 - `icons.overrides` — icon names keyed by node ID
 - `onIconMiss` — reports nodes that did not match the icon vocabulary
+- `limits` — override the size limits below
+
+### Size limits
+
+Layout time grows quickly with diagram size, so oversized input is rejected
+before layout with a `ParseError` (for Mermaid source) or `RangeError` (for a
+custom `DiagramAST`).
+
+| Limit | Default |
+|---|---|
+| `maxSourceLength` | 200,000 characters |
+| `maxNodes` | 400 |
+| `maxEdges` | 1,000 (after `A & B --> C & D` expansion) |
+| `maxGroups` | 100 subgraphs |
+| `maxDepth` | 20 nested subgraphs |
+
+Raise them per call if you need to:
+
+```js
+const svg = await render(source, { limits: { maxNodes: 800 } });
+```
+
+The defaults are exported as `defaultLimits`.
 
 The root package also exports the diagram and theme types, `iconManifest`, and
 `layoutDiagram`. A bundler-oriented entry is available at
@@ -171,13 +194,30 @@ edges use deterministic curved routes around the resulting group geometry.
 
 ## Security
 
-Open Eraser parses data; it does not execute JavaScript from Mermaid source.
-Labels are XML-escaped, and artifact data is embedded as escaped JSON.
+Open Eraser treats every input as data. It never executes JavaScript from
+Mermaid source.
 
-The renderer is not a general-purpose sandbox. Treat custom `DiagramAST` and
-`ThemeConfig` objects from untrusted sources as untrusted data and validate
-them before rendering. Report suspected vulnerabilities using
-[`SECURITY.md`](SECURITY.md).
+What the renderer enforces:
+
+- **Text is escaped.** Node, edge and subgraph labels are XML-escaped. Icon
+  names must match the built-in vocabulary. Colors must be hex values.
+- **Custom objects are checked.** A `DiagramAST` passed to `render()` is
+  validated for shape, allowed values and size. String fields in a custom
+  `ThemeConfig` are attribute-escaped, and its numbers must be finite.
+- **Size is limited.** See [Size limits](#size-limits).
+- **The HTML artifact is locked down.** Its content security policy blocks all
+  network access and allows only the artifact's own scripts, by hash. Inline
+  event handlers cannot run. Diagram data is embedded as inert JSON with `</`
+  escaped.
+
+What it does not do:
+
+- It is not a sandbox for arbitrary SVG or JavaScript.
+- A hostile custom theme can make colors render wrong. It cannot inject markup.
+- `layoutDiagram()` is a lower-level API and does not validate its input.
+  Prefer `render()` for untrusted data.
+
+Report suspected vulnerabilities using [`SECURITY.md`](SECURITY.md).
 
 ## Development
 

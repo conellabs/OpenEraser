@@ -17,9 +17,6 @@ If private vulnerability reporting is not visible, contact the repository
 maintainers privately through the owning GitHub organization and avoid
 including exploit details in a public message.
 
-Maintainers should enable GitHub private vulnerability reporting before making
-the repository public.
-
 ## Scope
 
 Useful reports include:
@@ -30,11 +27,11 @@ Useful reports include:
 - Parser or layout inputs that cause severe resource exhaustion
 - Dependency vulnerabilities that affect normal use
 
-Open Eraser is not a sandbox for arbitrary JavaScript, custom SVG, or
-unvalidated custom theme objects. Reports showing a boundary bypass or an
-unsafe documented default are still welcome.
+Open Eraser is not a sandbox for arbitrary JavaScript or custom SVG. The
+README's Security section describes what the renderer enforces. Reports
+showing a bypass of any of those guarantees are welcome.
 
 ## Supported versions
 
-Until the first public release, only the latest commit on `main` is supported.
-A version-support table will be added when stable public releases exist.
+While Open Eraser is `0.x`, only the latest published version receives
+security fixes.

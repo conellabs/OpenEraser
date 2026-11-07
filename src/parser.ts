@@ -8,6 +8,8 @@ import type {
   EdgeStyle,
   NodeShape,
 } from './types.js';
+import type { DiagramLimits } from './limits.js';
+import { resolveLimits } from './limits.js';
 
 export class ParseError extends Error {
   constructor(
@@ -54,7 +56,18 @@ interface MutableGroup {
   groups: MutableGroup[];
 }
 
-export function parse(source: string): DiagramAST {
+export interface ParseOptions {
+  /** Override the default size limits. */
+  limits?: Partial<DiagramLimits>;
+}
+
+export function parse(source: string, options: ParseOptions = {}): DiagramAST {
+  if (typeof source !== 'string') throw new TypeError('Mermaid source must be a string');
+  const limits = resolveLimits(options.limits);
+  if (source.length > limits.maxSourceLength) {
+    throw new ParseError(`Source is too long (limit ${limits.maxSourceLength} characters)`, 1);
+  }
+
   let direction: Direction = 'TB';
   let headerSeen = false;
 
@@ -68,7 +81,7 @@ export function parse(source: string): DiagramAST {
   const fillById = new Map<string, string>();
 
   /** Register a node on first appearance; later mentions may upgrade its label/shape. */
-  const ensureNode = (id: string, label?: string, shape?: NodeShape): void => {
+  const ensureNode = (id: string, lineNo: number, label?: string, shape?: NodeShape): void => {
     if (groupById.has(id)) return; // edge endpoint referencing a subgraph — leave as-is
     const existing = nodeById.get(id);
     if (existing) {
@@ -78,6 +91,7 @@ export function parse(source: string): DiagramAST {
       }
       return;
     }
+    if (nodeById.size >= limits.maxNodes) throw new ParseError(`Too many nodes (limit ${limits.maxNodes})`, lineNo);
     const node: DiagramNode = { id, label: label ?? id };
     if (shape && shape !== 'rect') node.shape = shape;
     nodeById.set(id, node);
@@ -102,11 +116,11 @@ export function parse(source: string): DiagramAST {
         const closeIdx = afterId.indexOf(close, open.length);
         if (closeIdx === -1) throw new ParseError(`Unclosed '${open}' on node '${id}'`, lineNo);
         const label = cleanLabel(afterId.slice(open.length, closeIdx));
-        ensureNode(id, label, shape);
+        ensureNode(id, lineNo, label, shape);
         return { id, end: cursor + closeIdx + close.length };
       }
     }
-    ensureNode(id);
+    ensureNode(id, lineNo);
     return { id, end: cursor };
   };
 
@@ -140,6 +154,10 @@ export function parse(source: string): DiagramAST {
       const style: EdgeStyle = op!.includes('.') ? 'dashed' : 'solid';
       const arrowType: ArrowType | undefined = op!.endsWith('>') ? undefined : 'none';
       const { ids: toIds, end: nextEnd } = parseNodeList(stmt, end + opMatch[0].length, lineNo);
+      // Check before expanding: `A & B & ... --> X & Y & ...` grows as a product.
+      if (edges.length + fromIds.length * toIds.length > limits.maxEdges) {
+        throw new ParseError(`Too many edges (limit ${limits.maxEdges})`, lineNo);
+      }
       for (const from of fromIds) {
         for (const to of toIds) {
           const edge: DiagramEdge = { from, to, style };
@@ -201,6 +219,12 @@ export function parse(source: string): DiagramAST {
       const id = idLabel ? idLabel[1]! : rest.replace(/^"|"$/g, '');
       const label = idLabel ? cleanLabel(idLabel[2]!) : rest.replace(/^"|"$/g, '');
       if (groupById.has(id)) throw new ParseError(`Duplicate subgraph id '${id}'`, lineNo);
+      if (groupById.size >= limits.maxGroups) {
+        throw new ParseError(`Too many subgraphs (limit ${limits.maxGroups})`, lineNo);
+      }
+      if (groupStack.length >= limits.maxDepth) {
+        throw new ParseError(`Subgraphs nested too deeply (limit ${limits.maxDepth})`, lineNo);
+      }
       const group: MutableGroup = { id, label: label || id, nodes: [], groups: [] };
       groupById.set(id, group);
       const parent = groupStack[groupStack.length - 1];

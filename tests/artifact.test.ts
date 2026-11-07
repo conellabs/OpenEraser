@@ -40,6 +40,8 @@ describe('injectData', () => {
     );
     expect(template).toContain(`default-src 'none'`);
     expect(template).toContain(`connect-src 'none'`);
+    // Scripts are allowed by build-time hash, never by 'unsafe-inline'.
+    expect(template).toContain('script-src __OPEN_ERASER_SCRIPT_HASHES__;');
     expect(template).not.toMatch(/<(?:script|link)[^>]+(?:src|href)=["']https?:/i);
   });
 });

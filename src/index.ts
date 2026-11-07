@@ -1,4 +1,7 @@
 export { parse, ParseError } from './parser.js';
+export type { ParseOptions } from './parser.js';
+export { defaultLimits } from './limits.js';
+export type { DiagramLimits } from './limits.js';
 export { render } from './render.js';
 export type { RenderOptions } from './render.js';
 export { themes, darkTheme } from './theme.js';
