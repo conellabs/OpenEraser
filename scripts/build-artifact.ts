@@ -7,6 +7,7 @@
 //
 // Usage: npm run build
 import { build } from 'esbuild';
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,7 +33,24 @@ const js = result.outputFiles[0]!.text.replace(/<\/script/gi, '<\\/script');
 const template = readFileSync(join(root, 'template', 'artifact.html'), 'utf8');
 // Replacement via function: the bundle contains `$` sequences that
 // String.replace would otherwise interpret as substitution patterns.
-const html = template.replace('__OPEN_ERASER_BUNDLE__', () => js);
+const withBundle = template.replace('__OPEN_ERASER_BUNDLE__', () => js);
+
+// Allow exactly the template's own inline scripts by hash instead of
+// 'unsafe-inline'. Inline event handlers (onload= and friends) stay blocked,
+// so markup that ever slipped into a rendered SVG still could not run.
+// The data block is type="application/json": it never executes, so consumers
+// can inject data without changing these hashes.
+const inlineScripts = [...withBundle.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]!);
+if (inlineScripts.length !== 2) {
+  throw new Error(`Expected 2 executable inline scripts in the template, found ${inlineScripts.length}`);
+}
+const hashes = inlineScripts
+  .map((body) => `'sha256-${createHash('sha256').update(body, 'utf8').digest('base64')}'`)
+  .join(' ');
+if (!withBundle.includes('__OPEN_ERASER_SCRIPT_HASHES__')) {
+  throw new Error('template/artifact.html lost its __OPEN_ERASER_SCRIPT_HASHES__ placeholder');
+}
+const html = withBundle.replace('__OPEN_ERASER_SCRIPT_HASHES__', () => hashes);
 
 if (!html.includes('__OPEN_ERASER_DATA__')) {
   throw new Error('template/artifact.html lost its __OPEN_ERASER_DATA__ placeholder');

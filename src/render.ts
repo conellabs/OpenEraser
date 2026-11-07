@@ -1,10 +1,13 @@
 import { resolveIcon } from './icons.js';
 import { layoutDiagram } from './layout.js';
+import type { DiagramLimits } from './limits.js';
+import { resolveLimits } from './limits.js';
 import { parse } from './parser.js';
 import { renderSvg } from './svg.js';
 import type { ThemeConfig } from './theme.js';
 import { sanitizeTheme, themes } from './theme.js';
 import type { DiagramAST, DiagramGroup, DiagramNode } from './types.js';
+import { assertDiagramAst } from './validate.js';
 
 export interface RenderOptions {
   /** Theme to render with. Defaults to the dark theme. */
@@ -13,6 +16,8 @@ export interface RenderOptions {
   icons?: { overrides?: Record<string, string> };
   /** Called for each node that fell through every icon fallback (vocabulary growth signal). */
   onIconMiss?: (node: DiagramNode) => void;
+  /** Override the default size limits. */
+  limits?: Partial<DiagramLimits>;
 }
 
 /**
@@ -21,7 +26,14 @@ export interface RenderOptions {
  * network access, no API keys.
  */
 export async function render(input: string | DiagramAST, options: RenderOptions = {}): Promise<string> {
-  const ast = typeof input === 'string' ? parse(input) : input;
+  const limits = resolveLimits(options.limits);
+  let ast: DiagramAST;
+  if (typeof input === 'string') {
+    ast = parse(input, { limits });
+  } else {
+    assertDiagramAst(input, limits);
+    ast = input;
+  }
   const theme = sanitizeTheme(options.theme ?? themes.dark);
   const resolved = withResolvedIcons(ast, options.icons?.overrides, options.onIconMiss);
   const layout = await layoutDiagram(resolved, theme);

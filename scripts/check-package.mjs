@@ -44,7 +44,8 @@ try {
 
   writeFileSync(
     join(consumerDir, 'smoke.mjs'),
-    `import { existsSync, readFileSync } from 'node:fs';
+    `import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const packageName = ${JSON.stringify(packageName)};
@@ -60,6 +61,16 @@ const templateUrl = import.meta.resolve(packageName + '/artifact-template.html')
 const template = readFileSync(fileURLToPath(templateUrl), 'utf8');
 if (!template.includes('__OPEN_ERASER_DATA__')) throw new Error('artifact template is missing its data placeholder');
 if (template.includes('__OPEN_ERASER_BUNDLE__')) throw new Error('artifact template still has its bundle placeholder');
+
+const csp = /http-equiv="Content-Security-Policy" content="([^"]+)"/.exec(template)?.[1] ?? '';
+const scriptSrc = /script-src[^;]*/.exec(csp)?.[0];
+if (!scriptSrc || scriptSrc.includes('unsafe-inline')) throw new Error('artifact CSP must allow scripts by hash only');
+const inlineScripts = [...template.matchAll(/<script>([\\s\\S]*?)<\\/script>/g)].map((m) => m[1]);
+if (inlineScripts.length !== 2) throw new Error('expected 2 inline scripts in the artifact template');
+for (const body of inlineScripts) {
+  const hash = "'sha256-" + createHash('sha256').update(body, 'utf8').digest('base64') + "'";
+  if (!scriptSrc.includes(hash)) throw new Error('artifact CSP is missing the hash of an inline script');
+}
 
 const vocabularyUrl = import.meta.resolve(packageName + '/icon-vocabulary.md');
 const vocabulary = readFileSync(fileURLToPath(vocabularyUrl), 'utf8');
