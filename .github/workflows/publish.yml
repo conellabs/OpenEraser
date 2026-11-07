@@ -68,6 +68,10 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: '@conellabs'
       - run: pnpm install --frozen-lockfile
+      # GitHub Packages only accepts scoped names. Existing installations use
+      # @conellabs/open-eraser there, so publish the compatibility copy under it.
+      - name: Use the scoped name for GitHub Packages
+        run: npm pkg set name=@conellabs/open-eraser
       - name: Check whether this version is already on GitHub Packages
         id: package
         shell: bash

@@ -3,19 +3,23 @@
 This project publishes deliberately from `.github/workflows/publish.yml`. A
 push to `main` does not publish a package.
 
-During the migration away from private packages, each release is published to
-both public npm and GitHub Packages. Some existing installations map the whole
-`@conellabs` scope to GitHub Packages, so removing that copy immediately would
-break their updates. Stop dual publishing only after those installations have
-moved to the public registry.
+The public package is `open-eraser` on npm.
+
+During the migration away from private packages, each release is also published
+to GitHub Packages as `@conellabs/open-eraser`. Some existing installations map
+the whole `@conellabs` scope to GitHub Packages, so removing that copy
+immediately would break their updates. Stop dual publishing only after those
+installations have moved to `open-eraser` on the public registry.
+
+`@conellabs/open-eraser@0.1.0` was published to public npm once before the
+rename. It is deprecated in favor of `open-eraser`.
 
 ## One-time repository setup
 
 Before the first public release:
 
 1. Make the GitHub repository public.
-2. Confirm that the `@conellabs` npm scope exists and the maintainers can
-   publish `@conellabs/open-eraser`.
+2. Confirm that the maintainers can publish `open-eraser` on npm.
 3. Bootstrap the new npm package from an authenticated maintainer machine.
    Trusted publishing cannot be configured until the package exists. With a
    current npm CLI, prefer `npm stage publish --access public`, then approve or
