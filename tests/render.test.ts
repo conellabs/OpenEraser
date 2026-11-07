@@ -77,6 +77,28 @@ describe('edge styles', () => {
   });
 });
 
+describe('SVG safety', () => {
+  it('escapes authored labels and runtime theme strings', async () => {
+    const theme = structuredClone(themes.dark);
+    theme.font = '\"><script>alert(1)</script>';
+    theme.defaultAccent = '\"><script>alert(2)</script>';
+    theme.accentPalette = ['\"><script>alert(3)</script>'];
+    theme.node.fill = '\"><script>alert(4)</script>';
+
+    const svg = await render(`graph LR\n  A[\"</text><script>alert(5)</script>\"] --> B[Safe]`, { theme });
+
+    expect(svg).not.toContain('<script>');
+    expect(svg).toContain('&lt;script&gt;alert(1)&lt;/script&gt;');
+    expect(svg).toContain('&lt;/text&gt;&lt;script&gt;alert(5)&lt;/script&gt;');
+  });
+
+  it('rejects invalid numeric theme values', async () => {
+    const theme = structuredClone(themes.dark);
+    theme.edge.width = Number.NaN;
+    await expect(render(`graph LR\n  A --> B`, { theme })).rejects.toThrow(/edge\.width.*finite number/);
+  });
+});
+
 describe('layoutDiagram() invariants', () => {
   it('produces sane geometry for the detailed fixture', async () => {
     const ast = parse(fixture('breathalyzer-detailed.mmd'));

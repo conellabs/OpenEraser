@@ -5,8 +5,8 @@ import type { ThemeConfig } from './theme.js';
 import { normalizeAccent } from './theme.js';
 import type { DiagramAST, DiagramEdge, DiagramGroup, DiagramNode } from './types.js';
 
-// Hybrid layout strategy (see Plan/open-eraser-plan.md, "Layout Spike Learnings"):
-//   1. Each group's internals laid out independently (compact, orthogonal).
+// Hybrid layout strategy:
+//   1. Each group's internals are laid out independently (compact, orthogonal).
 //   2. Groups become fixed-size nodes in a root layout (positioning only).
 //   3. Cross-group edges drawn as direct beziers with obstacle-aware bowing.
 // ELK's INCLUDE_CHILDREN mode was tried and rejected — it sprawls badly on

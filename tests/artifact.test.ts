@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { injectData } from '../scripts/make-artifact.js';
 
@@ -28,5 +31,15 @@ describe('injectData', () => {
 
   it('rejects templates without the placeholder', () => {
     expect(() => injectData('<html></html>', 't', [])).toThrow(/placeholder/);
+  });
+
+  it('ships a restrictive offline content security policy', () => {
+    const template = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), '..', 'template', 'artifact.html'),
+      'utf8',
+    );
+    expect(template).toContain(`default-src 'none'`);
+    expect(template).toContain(`connect-src 'none'`);
+    expect(template).not.toMatch(/<(?:script|link)[^>]+(?:src|href)=["']https?:/i);
   });
 });

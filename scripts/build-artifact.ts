@@ -1,7 +1,7 @@
 // Builds dist/artifact-template.html: the browser bundle (parser + layout +
 // renderer + icons, elkjs included) inlined into template/artifact.html.
-// Consumers (e.g. the Wire.AI CLI) produce a finished artifact by replacing
-// the __OPEN_ERASER_DATA__ placeholder — string templating only, no Node
+// Consumers produce a finished artifact by replacing the
+// __OPEN_ERASER_DATA__ placeholder — string templating only, no Node
 // required at generation time. See scripts/make-artifact.ts for the reference
 // implementation.
 //

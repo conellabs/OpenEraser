@@ -22,6 +22,50 @@ export const darkTheme: ThemeConfig = {
 
 export const themes = { dark: darkTheme };
 
+const escapeAttribute = (value: string): string =>
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+const finiteNumber = (value: number, field: string): number => {
+  if (!Number.isFinite(value)) throw new TypeError(`Theme field '${field}' must be a finite number`);
+  return value;
+};
+
+/**
+ * Copy and escape a caller-supplied theme before its values are interpolated
+ * into SVG attributes. TypeScript types do not protect the runtime API from
+ * objects built from JSON or other untrusted input.
+ */
+export function sanitizeTheme(theme: ThemeConfig): ThemeConfig {
+  if (!Array.isArray(theme.accentPalette) || theme.accentPalette.length === 0) {
+    throw new TypeError("Theme field 'accentPalette' must contain at least one color");
+  }
+
+  return {
+    background: escapeAttribute(String(theme.background)),
+    font: escapeAttribute(String(theme.font)),
+    group: {
+      fill: escapeAttribute(String(theme.group.fill)),
+      stroke: escapeAttribute(String(theme.group.stroke)),
+      radius: finiteNumber(theme.group.radius, 'group.radius'),
+    },
+    node: {
+      fill: escapeAttribute(String(theme.node.fill)),
+      stroke: escapeAttribute(String(theme.node.stroke)),
+      radius: finiteNumber(theme.node.radius, 'node.radius'),
+      title: escapeAttribute(String(theme.node.title)),
+      subtitle: escapeAttribute(String(theme.node.subtitle)),
+    },
+    edge: {
+      stroke: escapeAttribute(String(theme.edge.stroke)),
+      width: finiteNumber(theme.edge.width, 'edge.width'),
+      label: escapeAttribute(String(theme.edge.label)),
+      labelBg: escapeAttribute(String(theme.edge.labelBg)),
+    },
+    accentPalette: theme.accentPalette.map((color) => escapeAttribute(String(color))),
+    defaultAccent: escapeAttribute(String(theme.defaultAccent)),
+  };
+}
+
 function hslToHex(h: number, s: number, l: number): string {
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));

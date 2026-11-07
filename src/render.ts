@@ -3,7 +3,7 @@ import { layoutDiagram } from './layout.js';
 import { parse } from './parser.js';
 import { renderSvg } from './svg.js';
 import type { ThemeConfig } from './theme.js';
-import { themes } from './theme.js';
+import { sanitizeTheme, themes } from './theme.js';
 import type { DiagramAST, DiagramGroup, DiagramNode } from './types.js';
 
 export interface RenderOptions {
@@ -22,7 +22,7 @@ export interface RenderOptions {
  */
 export async function render(input: string | DiagramAST, options: RenderOptions = {}): Promise<string> {
   const ast = typeof input === 'string' ? parse(input) : input;
-  const theme = options.theme ?? themes.dark;
+  const theme = sanitizeTheme(options.theme ?? themes.dark);
   const resolved = withResolvedIcons(ast, options.icons?.overrides, options.onIconMiss);
   const layout = await layoutDiagram(resolved, theme);
   return renderSvg(layout, theme);
