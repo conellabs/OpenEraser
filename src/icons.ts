@@ -14,10 +14,10 @@
  *   - keep ~2px padding from the viewBox edge; 3-6 strokes per glyph —
  *     at 16px render size, simple beats detailed
  *
- * We own this set (see plan, decided 2026-06-13). Individual glyphs may be
- * adapted from Lucide (https://lucide.dev, ISC license); the rest are
- * original. Grow the set demand-driven: render with `onIconMiss` and add
- * what real diagrams ask for.
+ * This project maintains the vocabulary. Portions of the glyph set are
+ * adapted from Lucide; the remaining glyphs are original. See
+ * THIRD_PARTY_NOTICES.md for attribution and license details. Grow the set
+ * demand-driven: render with `onIconMiss` and add what real diagrams ask for.
  */
 export interface IconDef {
   name: string;

@@ -1,6 +1,6 @@
 // Reference implementation of artifact generation from the built template.
-// The Wire.AI CLI (Python) will do exactly this with str.replace — keep the
-// escaping rules here in sync with any port.
+// Keep these escaping rules in sync with integrations implemented in other
+// languages.
 import { readFileSync, writeFileSync } from 'node:fs';
 
 export interface ArtifactDiagram {

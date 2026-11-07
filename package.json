@@ -1,37 +1,68 @@
 {
   "name": "@conellabs/open-eraser",
-  "version": "0.0.2",
-  "description": "Deterministic renderer for Mermaid flowcharts with Eraser-quality output. Pure Node — no browser in the build.",
+  "version": "0.1.0",
+  "description": "Deterministic, offline renderer for Mermaid flowcharts with architecture-focused SVG output.",
   "type": "module",
+  "license": "MIT",
   "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/conellabs/OpenEraser.git"
   },
+  "homepage": "https://github.com/conellabs/OpenEraser#readme",
+  "bugs": {
+    "url": "https://github.com/conellabs/OpenEraser/issues"
+  },
+  "keywords": [
+    "architecture",
+    "diagram",
+    "flowchart",
+    "mermaid",
+    "svg"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "default": "./dist/browser.js"
+    },
+    "./artifact-template.html": "./dist/artifact-template.html",
+    "./icon-vocabulary.md": "./generated/icon-vocabulary.md"
   },
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
-    "README.md"
+    "generated/icon-vocabulary.md",
+    "licenses",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "THIRD_PARTY_NOTICES.md"
   ],
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "build:lib": "rm -rf dist && tsc -p tsconfig.build.json",
-    "prepack": "pnpm build:lib",
+    "clean": "node --eval \"require('node:fs').rmSync('dist', { recursive: true, force: true }); require('node:fs').rmSync('generated/icon-vocabulary.md', { force: true })\"",
+    "build:lib": "tsc -p tsconfig.build.json",
+    "build:artifact": "tsx scripts/build-artifact.ts",
+    "build": "pnpm clean && pnpm build:lib && pnpm build:artifact",
+    "check:package": "node scripts/check-package.mjs",
+    "prepack": "pnpm build",
     "pipeline": "tsx scripts/pipeline.ts",
     "icon-sheet": "tsx scripts/icon-sheet.ts",
     "gen-vocab": "tsx scripts/gen-vocab.ts",
-    "build": "tsx scripts/build-artifact.ts",
     "demo-artifact": "tsx scripts/demo-artifact.ts"
   },
   "dependencies": {
