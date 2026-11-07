@@ -11,9 +11,6 @@ the whole `@conellabs` scope to GitHub Packages, so removing that copy
 immediately would break their updates. Stop dual publishing only after those
 installations have moved to `open-eraser` on the public registry.
 
-`@conellabs/open-eraser@0.1.0` was published to public npm once before the
-rename. It is deprecated in favor of `open-eraser`.
-
 ## One-time repository setup
 
 Before the first public release:
